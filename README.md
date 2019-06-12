@@ -10,3 +10,7 @@ Methods tested but not in use:
 
 - Chi-Square Analysis
 - Random Forest 
+
+Future techniques to investigate:
+
+- Gower's Distance
