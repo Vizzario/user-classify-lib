@@ -1,0 +1,472 @@
+{
+    "age": {
+        "6": 1,
+        "12": 1,
+        "16": 3,
+        "17": 4,
+        "18": 45,
+        "19": 43,
+        "20": 33,
+        "21": 53,
+        "22": 37,
+        "23": 44,
+        "24": 53,
+        "25": 63,
+        "26": 72,
+        "27": 91,
+        "28": 51,
+        "29": 69,
+        "30": 92,
+        "31": 73,
+        "32": 75,
+        "33": 61,
+        "34": 80,
+        "35": 70,
+        "36": 58,
+        "37": 58,
+        "38": 60,
+        "39": 65,
+        "40": 57,
+        "41": 43,
+        "42": 54,
+        "43": 42,
+        "44": 56,
+        "45": 52,
+        "46": 50,
+        "47": 61,
+        "48": 49,
+        "49": 46,
+        "50": 45,
+        "51": 70,
+        "52": 51,
+        "53": 54,
+        "54": 52,
+        "55": 61,
+        "56": 69,
+        "57": 55,
+        "58": 62,
+        "59": 66,
+        "60": 78,
+        "61": 57,
+        "62": 59,
+        "63": 64,
+        "64": 66,
+        "65": 156,
+        "66": 5,
+        "67": 3,
+        "68": 2,
+        "69": 4,
+        "70": 1,
+        "71": 2,
+        "72": 3,
+        "73": 3,
+        "74": 1,
+        "75": 2,
+        "76": 1,
+        "78": 2,
+        "79": 1,
+        "83": 1,
+        "86": 1
+    },
+    "caffeine": {
+        "0-1": 9,
+        "1-2": 15,
+        "2-4": 9,
+        "4-6": 2
+    },
+    "daily_exercise_hours": {
+        "0-1": 18,
+        "1-2": 10,
+        "2-3": 3,
+        "3-4": 1,
+        "4+": 3
+    },
+    "education": {
+        "college/uni": 725,
+        "graduate": 388,
+        "high school": 483,
+        "no formal education": 24,
+        "post-graduate": 232,
+        "some college/uni": 741,
+        "some high school": 62,
+        "vocational training": 145
+    },
+    "ethnicity": {
+        "Asian": 4,
+        "Black / African-American": 5,
+        "Hispanic or Latino": 1,
+        "South Asian": 2,
+        "White / Caucasian": 10,
+        "asian": 107,
+        "black / african-american": 344,
+        "hispanic or latino": 201,
+        "native american or alaska native": 29,
+        "other": 45,
+        "south asian": 18,
+        "white / caucasian": 2123
+    },
+    "eyeConditions | arcus": {
+        "false": 1775,
+        "true": 10
+    },
+    "eyeConditions | arcus | mild": {
+        "false": 1782,
+        "true": 3
+    },
+    "eyeConditions | arcus | moderate": {
+        "false": 1782,
+        "true": 3
+    },
+    "eyeConditions | arcus | severe": {
+        "false": 1781,
+        "true": 4
+    },
+    "eyeConditions | blepharitis": {
+        "false": 1761,
+        "true": 24
+    },
+    "eyeConditions | blepharitis | mild": {
+        "false": 1770,
+        "true": 15
+    },
+    "eyeConditions | blepharitis | moderate": {
+        "false": 1779,
+        "true": 6
+    },
+    "eyeConditions | blepharitis | severe": {
+        "false": 1782,
+        "true": 3
+    },
+    "eyeConditions | cataract": {
+        "false": 1399,
+        "true": 386
+    },
+    "eyeConditions | cataract | mild": {
+        "false": 1547,
+        "true": 238
+    },
+    "eyeConditions | cataract | moderate": {
+        "false": 1679,
+        "true": 106
+    },
+    "eyeConditions | cataract | severe": {
+        "false": 1750,
+        "true": 35
+    },
+    "eyeConditions | central vision loss": {
+        "false": 1731,
+        "true": 54
+    },
+    "eyeConditions | diabetic retinopathy": {
+        "false": 1706,
+        "true": 79
+    },
+    "eyeConditions | diabetic retinopathy | mild": {
+        "false": 1746,
+        "true": 39
+    },
+    "eyeConditions | diabetic retinopathy | moderate": {
+        "false": 1763,
+        "true": 22
+    },
+    "eyeConditions | diabetic retinopathy | severe": {
+        "false": 1768,
+        "true": 17
+    },
+    "eyeConditions | dry eye": {
+        "false": 862,
+        "true": 923
+    },
+    "eyeConditions | dry eye | mild": {
+        "false": 1349,
+        "true": 436
+    },
+    "eyeConditions | dry eye | moderate": {
+        "false": 1434,
+        "true": 351
+    },
+    "eyeConditions | dry eye | severe": {
+        "false": 1665,
+        "true": 120
+    },
+    "eyeConditions | glaucoma": {
+        "false": 1620,
+        "true": 165
+    },
+    "eyeConditions | glaucoma | mild": {
+        "false": 1692,
+        "true": 93
+    },
+    "eyeConditions | glaucoma | moderate": {
+        "false": 1733,
+        "true": 52
+    },
+    "eyeConditions | glaucoma | severe": {
+        "false": 1769,
+        "true": 16
+    },
+    "eyeConditions | light sensitivity": {
+        "false": 1352,
+        "true": 433
+    },
+    "eyeConditions | light sensitivity | mild": {
+        "false": 1601,
+        "true": 184
+    },
+    "eyeConditions | light sensitivity | moderate": {
+        "false": 1594,
+        "true": 191
+    },
+    "eyeConditions | light sensitivity | severe": {
+        "false": 1739,
+        "true": 46
+    },
+    "eyeConditions | macular degeneration": {
+        "false": 1706,
+        "true": 79
+    },
+    "eyeConditions | macular degeneration | mild": {
+        "false": 1735,
+        "true": 50
+    },
+    "eyeConditions | macular degeneration | moderate": {
+        "false": 1761,
+        "true": 24
+    },
+    "eyeConditions | macular degeneration | severe": {
+        "false": 1781,
+        "true": 4
+    },
+    "eyeConditions | peripheral vision loss": {
+        "false": 1729,
+        "true": 56
+    },
+    "eyeConditions | retinitis pigmentosa": {
+        "false": 1772,
+        "true": 13
+    },
+    "eyeConditions | retinitis pigmentosa | mild": {
+        "false": 1781,
+        "true": 4
+    },
+    "eyeConditions | retinitis pigmentosa | moderate": {
+        "false": 1777,
+        "true": 8
+    },
+    "eyeConditions | retinitis pigmentosa | severe": {
+        "false": 1784,
+        "true": 1
+    },
+    "eyeConditions | stargardts": {
+        "false": 1776,
+        "true": 9
+    },
+    "eyeConditions | stargardts | mild": {
+        "false": 1779,
+        "true": 6
+    },
+    "eyeConditions | stargardts | moderate": {
+        "false": 1783,
+        "true": 2
+    },
+    "eyeConditions | stargardts | severe": {
+        "false": 1784,
+        "true": 1
+    },
+    "eyeConditions | usher syndrome": {
+        "false": 1779,
+        "true": 6
+    },
+    "eyeConditions | usher syndrome | moderate": {
+        "false": 1783,
+        "true": 2
+    },
+    "eyeConditions | usher syndrome | severe": {
+        "false": 1781,
+        "true": 4
+    },
+    "familyHealthConditions | alzheimer's": {
+        "false": 1861,
+        "true": 354
+    },
+    "familyHealthConditions | cancer": {
+        "false": 1212,
+        "true": 1003
+    },
+    "familyHealthConditions | diabetes": {
+        "false": 1036,
+        "true": 1179
+    },
+    "familyHealthConditions | high cholesterol": {
+        "false": 1305,
+        "true": 910
+    },
+    "familyHealthConditions | hypertension": {
+        "false": 1315,
+        "true": 900
+    },
+    "familyHealthConditions | multiple sclerosis": {
+        "false": 2161,
+        "true": 54
+    },
+    "familyHealthConditions | parkinson's": {
+        "false": 2079,
+        "true": 136
+    },
+    "familyHealthConditions | stroke": {
+        "false": 1746,
+        "true": 469
+    },
+    "gender": {
+        "female": 1985,
+        "male": 972,
+        "other": 4
+    },
+    "glassesWhenGaming": {
+        "performance eyewear (gunnar, nike etc.)": 1,
+        "prescription glasses": 9
+    },
+    "healthConditions | cancer": {
+        "false": 2208,
+        "true": 7
+    },
+    "healthConditions | diabetes": {
+        "false": 2181,
+        "true": 34
+    },
+    "healthConditions | high cholesterol": {
+        "false": 2142,
+        "true": 73
+    },
+    "healthConditions | hypertension": {
+        "false": 2167,
+        "true": 48
+    },
+    "healthConditions | inflammatory disease": {
+        "false": 2207,
+        "true": 8
+    },
+    "healthConditions | metabolic syndrome": {
+        "false": 2214,
+        "true": 1
+    },
+    "healthConditions | migraines": {
+        "false": 2126,
+        "true": 89
+    },
+    "healthConditions | multiple sclerosis": {
+        "false": 2211,
+        "true": 4
+    },
+    "healthConditions | thyroid dysfunction": {
+        "false": 2181,
+        "true": 34
+    },
+    "hoursPlayingLol": {
+        "0-2": 5,
+        "12+": 2,
+        "2-5": 5,
+        "5-9": 10,
+        "9-12": 5
+    },
+    "hours_activity_per_week": {
+        "0-1": 429,
+        "1-2": 588,
+        "2-3": 566,
+        "3-4": 555,
+        "4+": 689
+    },
+    "hours_screen_per_day": {
+        "0-2": 285,
+        "12+": 140,
+        "2-5": 1052,
+        "5-9": 904,
+        "9-12": 454
+    },
+    "l_o_l_rank": {
+        "bronze": 10,
+        "diamond": 1,
+        "gold": 9,
+        "platinum": 2,
+        "silver": 13
+    },
+    "l_o_l_role": {
+        "bot": 7,
+        "jungle": 6,
+        "mid": 8,
+        "support": 11,
+        "top": 3
+    },
+    "occupation": {
+        "architecture and engineering": 49,
+        "arts, design, entertainment, media": 97,
+        "athletics": 51,
+        "building, grounds cleaning, and maintenance": 51,
+        "business and financial": 209,
+        "community and social service": 74,
+        "computer and mathematical": 140,
+        "construction and extraction": 71,
+        "education, training, and library": 231,
+        "farming, fishing, and forestry": 23,
+        "food preparation and serving": 127,
+        "healthcare practitioners and technical": 130,
+        "healthcare support": 144,
+        "installation, maintenance, and repair": 39,
+        "legal": 29,
+        "life, physical, and social science": 51,
+        "management": 470,
+        "office and administrative": 268,
+        "personal care and service": 172,
+        "production and manufacturing": 63,
+        "protective service": 22,
+        "sales and related": 224,
+        "transportation and material": 65
+    },
+    "primaryRoleLol": {
+        "bot": 4,
+        "jungle": 5,
+        "mid": 6,
+        "support": 4,
+        "top": 8
+    },
+    "secondaryRoleLol": {
+        "bot": 4,
+        "jungle": 5,
+        "mid": 7,
+        "support": 8,
+        "top": 3
+    },
+    "stress": {
+        "1": 3,
+        "2": 7,
+        "3": 16,
+        "4": 9
+    },
+    "study_key": {
+        "fulcrum_pilot": 92,
+        "fulcrum_study": 2625,
+        "jackson": 83,
+        "prism_2017": 82,
+        "prism_2018": 25,
+        "riot_2017": 27,
+        "riot_summer_2018": 35
+    },
+    "visionPrescription": {
+        "farsighted": 540,
+        "nearsighted": 1213,
+        "only glasses to read": 347
+    },
+    "visual_correction": {
+        "contacts": 10,
+        "glasses": 8,
+        "no": 15,
+        "surgery": 2
+    },
+    "weekly_gaming_hours": {
+        "0-5": 1,
+        "10-15": 9,
+        "15-20": 7,
+        "20+": 11,
+        "5-10": 7
+    }
+}

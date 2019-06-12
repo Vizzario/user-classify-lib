@@ -1,0 +1,10 @@
+#python
+venv
+__pycache__
+
+#pycharm
+.idea
+
+#outputs
+latex
+examples
