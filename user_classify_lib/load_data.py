@@ -15,7 +15,7 @@ import user_classify_lib.corextopic.corextopic as cet
 #import user_classify_lib.corextopic.vis_topic as vis
 
 import user_classify_lib.biocorex as ce
-import user_classify_lib.vis_corex as vis
+#import user_classify_lib.vis_corex as vis
 
 import user_classify_lib.psy_variables as psy
 import user_classify_lib.demographic_variables as dem
@@ -228,6 +228,92 @@ def add_response_to_binary_value_samples(samples: np.ndarray, raw_data: dict, us
             i = i+1
 
     return new_samples
+
+"""
+    GOWER'S DISTANCE
+"""
+
+# get the range for all the numerical responses in a data survey
+def get_range_in_labels(raw_data : dict, labels, set_key = None):
+    label_range = dict()
+    label_max = dict()
+    label_min = dict()
+    for user, value in raw_data.items():
+        if set_key is None:
+            response = value
+        else:
+            response = value[set_key]
+        for label in labels:
+            if label in response.keys():
+                if response[label] is not str:
+                    if label not in label_max.keys():
+                        label_max[label] = response[label]
+                        label_min[label] = response[label]
+                    else:
+                        if response[label] > label_max[label]: label_max[label] = response[label]
+                        if response[label] < label_min[label]: label_min[label] = response[label]
+
+    for label in label_max.keys():
+        label_range[label] = label_max[label] - label_min[label]
+
+    return label_range
+
+
+# calculate the gower distance between two users
+# note that the label_range is a dictionary that lists the range of all quantitative responses
+def calculate_gower_distance(raw_data : dict, user1 : str, user2: str, labels: list, label_range: dict, set_key = None):
+
+    if set_key is None:
+        user1_set = raw_data[user1]
+        user2_set = raw_data[user2]
+    else:
+        user1_set = raw_data[user1][set_key]
+        user2_set = raw_data[user2][set_key]
+
+    gower_val = list()
+    gower_dist = 0
+    for label in labels:
+        if label in user1_set.keys() and label in user2_set.keys():
+            if type(user1_set[label]) is not str:
+                gower = np.abs(user1_set[label]-user2_set[label]) / label_range[label]
+            else:
+                if user1_set[label] == user2_set[label]:
+                    gower = 0
+                else:
+                    gower = 1
+            gower_dist = gower_dist + gower
+            gower_val.append(gower)
+    if(len(gower_val)) == 0 : gower_dist_norm = None
+    else : gower_dist_norm = gower_dist / len(gower_val)
+
+    return gower_dist_norm, gower_val
+
+def find_min_gower_distance_brute(raw_data: dict, user_list: list, labels: list, label_range: dict, set_key = None):
+    minDist, closest_user1, closest_user2 = None, None, None
+    rank_dist = list()
+    rank_user = list()
+    for i in range(len(user_list)):
+        for j in range(i+1, len(user_list)):
+
+            dist, val = calculate_gower_distance(raw_data, user_list[i], user_list[j], labels, label_range, set_key)
+            if dist is not None:
+                if minDist is None or dist < minDist:
+                    minDist = dist
+                    closest_user1 = user_list[i]
+                    closest_user2 = user_list[j]
+            if len(rank_dist) == 0 :
+                rank_dist.append(dist)
+                rank_user.append([user_list[i], user_list[j]])
+            else:
+                for k in range(len(rank_dist)):
+                    if rank_dist[k] > dist:
+                        rank_dist.insert(k, dist)
+                        rank_user.insert(k, [user_list[i], user_list[j]])
+                        break
+
+
+    return rank_dist, rank_user
+
 
 def test_ce():
     X = np.array([[0, 0, 0, 0, 0],  # A matrix with rows as samples and columns as variables.
@@ -528,7 +614,26 @@ def run_demo_psych_combined(raw_data: dict, psy_group_key : str = None):
     test_output.writeArrows(n_clusters,"Psy_Cluster_")
     test_output.writeFooter()
 
+"""TESTING GOWER DISTANCE"""
 
+def test_gower(raw_data: dict):
+    conditions = get_questions(raw_data['fulcrum_study'], set_key='demographics', anchor_key='eyeConditions | glaucoma',
+                               data_type='all', omitted_words=['mild', 'moderate', 'severe'])
+    print(conditions)
+    user_ids = get_user_ids(raw_data['fulcrum_study'])
+    range = dict()
+    for label in conditions: range[label] = 1
+    user_list = list(user_ids)
+
+    gower_dist, gower_val = calculate_gower_distance(raw_data['fulcrum_study'], user_list[0], user_list[1], labels=conditions, label_range=range, set_key='demographics')
+
+    rank_dist, rank_user = find_min_gower_distance_brute(raw_data['fulcrum_study'], user_list, labels=conditions, label_range=range, set_key='demographics')
+
+    print(rank_dist)
+    print(rank_user)
+    #print(minDist)
+    #print(json.dumps(raw_data['fulcrum_study'][closest_user1]['demographics'], indent=4, sort_keys=True))
+    #print(json.dumps(raw_data['fulcrum_study'][closest_user2]['demographics'], indent=4, sort_keys=True))
 
 if __name__ == "__main__":
 
@@ -558,9 +663,11 @@ if __name__ == "__main__":
     #for run in range(5):
     #    print("RUN NUMBER {0}".format(run))
     #    print("===================================================================")
+
     #run_fulcrum_data()
     #run_psychometric_data(raw_data)
-    run_demo_psych_combined(raw_data)
+    #run_demo_psych_combined(raw_data)
+    test_gower(raw_data)
 
     #for psyKey in PSY_GROUPS:
     #   run_demo_psych_combined(raw_data, psyKey)
