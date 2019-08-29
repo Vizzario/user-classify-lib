@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.model_selection import train_test_split
-
+from user_classify_lib.model.performance_model import PerformanceModel
 
 classifier_options = {
     'Dummy': DummyClassifier(strategy="stratified"),
@@ -156,9 +156,22 @@ class SupervisedClassifier:
     def __hash__(self):
         return hash((self.model))
 
-'''
+
 class VPISupervisedClassifier(SupervisedClassifier):
+
+    self.vpi_components = ["field_of_view", "accuracy", "multi_tracking", "endurance", "detection"]
 
     def __init__(self, classifier_type: str = 'Dummy',
                  output_labels : list = None):
-'''
+
+
+        super().__init__(classifier_type, input_labels=self.vpi_components,
+                         output_labels=output_labels)
+
+    def predict(self, components : PerformanceModel):
+
+        score_breakdown = components.scores_breakdown
+        inputs = get_responses_from_questions(score_breakdown, self.vpi_components)
+        result = self.model.predict(inputs)
+
+        return result
