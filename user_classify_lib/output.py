@@ -6,7 +6,7 @@ Author: Eric Hu
 """
 import numpy as np
 
-class LatexChartGenerator():
+class LatexClusterChartGenerator():
 
     def __init__(self, path: str):
         self.path = path
@@ -249,5 +249,135 @@ class LatexChartGenerator():
 		(\\finish.west);
 }
 %END_FOLD""")
+
+    #endregion
+
+
+class LatexFeaturesBarGraphGenerator():
+
+    def __init__(self, path: str):
+        self.path = path
+        self.f = open(path, "w")
+
+    # region Header
+    def writeHeader(self, title: str):
+        self.f.write(
+            """\\documentclass{{article}}
+\\usepackage{{pgfplots}}
+
+\\usepackage{{fancyhdr}}
+\\fancyhf{{}} % clear all header and footers
+\\renewcommand{{\headrulewidth}}{{0pt}} % remove the header rule
+\\pagestyle{{fancy}}
+
+\\pgfplotsset{{compat=1.9}}
+\\title{{\\sffamily Graphical Representation of {0}}}
+\\date{{}}
+\\begin{{document}}
+\\maketitle
+\\begin{{tikzpicture}}""".format(title.replace('_', ' ').replace(',', '{,}'))
+        )
+
+    # endregion
+
+    # region Footer
+    def writeFooter(self):
+        self.f.write(
+            """
+\\end{tikzpicture}
+
+\\end{document}"""
+        )
+        self.f.close()
+
+    # endregion
+
+    #region Formatting the Stacked Bar Graph
+    def formatStackedGraph(self):
+        self.f.write(
+            """            
+            every axis title/.append style={font=\large\sffamily,color=black!60},
+            xbar stacked,
+            width=12cm, height=3.5cm, enlarge y limits=1.5,
+            xmin=0,
+            ticks=none,
+            axis line style={draw=none},
+            symbolic y coords={response},
+            ytick=data,
+            legend style={at={(0.5,1.05)}, draw=none, font=\sffamily,
+                anchor=north,legend columns=-1},
+            nodes near coords,
+            nodes near coords align={below},
+            every node near coord/.append style={
+         yshift=-3pt}]"""
+        )
+    #endregion
+
+    #region Formatting the Bar Graph
+    def formatBarGraph(self):
+        self.f.write(
+            """            every axis title/.append style={font=\\large\\sffamily,color=black!60},
+            xbar,
+            xmin=0,
+            ytick=data,
+            y tick label style={anchor=east, align=right,text width=5cm},
+            nodes near coords
+         ]"""
+        )
+    #endregion
+
+    def pageBreak(self):
+        self.f.write("""
+    \\end{tikzpicture}
+    \\newpage
+    \\begin{tikzpicture}
+        """)
+
+    #region Generating the Stacked Bar Graph
+    def makeFeaturesStackedGraph(self, offset:int, title:str, response_names:list, response_values:list):
+        self.f.write("\n\t\\begin{{scope}}[yshift={0}cm]".format(offset))
+        self.f.write("\n\t\t\\begin{axis}[")
+        self.f.write("\n\t\t\ttitle=\\textbf{{{0}}},".format(title.replace('_', ' ').replace(',', '{,}')))
+        self.formatStackedGraph()
+        for val in response_values:
+            self.f.write("\n\t\t\\addplot coordinates {{({0},response)}};".format(val))
+        legend_str = "\n\t\t\\legend{"
+        add_comma = False
+        for name in response_names:
+            if add_comma:
+                legend_str = legend_str + ", "
+            else:
+                add_comma = True
+            legend_str = legend_str + "\\strut " + str(name).replace('_', ' ').replace(',', '{,}')
+        legend_str = legend_str + "}"
+        self.f.write(legend_str)
+        self.f.write("\n\t\t\\end{axis}")
+        self.f.write("\n\t\\end{scope}")
+
+    #endregion
+
+    #region Generating the Stacked Bar Graph
+    def makeFeaturesBarGraph(self, title:str, response_names:list, response_values:list):
+        self.f.write("\n\t\\begin{scope}[yshift=0cm]")
+        self.f.write("\n\t\t\\begin{axis}[")
+        self.f.write("\n\t\t\ttitle=\\textbf{{{0}}},".format(title.replace('_', ' ').replace(',', '{,}')))
+        self.f.write("\n\t\t\twidth=\\textwidth, height={0}cm, enlarge y limits={1},".format(len(response_names), 0.5/len(response_names)))
+        label_string = "\n\t\t\tsymbolic y coords={"
+        plotting_string = "\n\t\t\\addplot coordinates { "
+        for i in range(len(response_names)):
+            if i != 0:
+                label_string = label_string + ', '
+            label_string = label_string + str(response_names[i]).replace('_', ' ').replace(',', '{,}')
+            plotting_string = plotting_string + '(' + str(response_values[i]) + ',' + str(response_names[i]).replace('_', ' ').replace(',', '{,}') + ')'
+
+        label_string = label_string + "},"
+        plotting_string = plotting_string + "};"
+
+        self.f.write(label_string)
+        self.formatBarGraph()
+        self.f.write(plotting_string)
+
+        self.f.write("\n\t\t\\end{axis}")
+        self.f.write("\n\t\\end{scope}")
 
     #endregion

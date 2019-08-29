@@ -111,3 +111,36 @@ components = [
 overall = [
     'overall'
 ]
+
+psy_range=[
+    "055-065",
+    "066-075",
+    "076-085",
+    "086-095",
+    "096-105",
+    "106-115",
+    "116-125",
+    "126-135",
+    "136-145"
+]
+
+def bin_psy_range(psy_val: float, psy_dict: dict):
+    if psy_val <=65:
+        psy_dict["055-065"] += 1
+    elif psy_val <= 75:
+        psy_dict["066-075"] += 1
+    elif psy_val <= 85:
+        psy_dict["076-085"] += 1
+    elif psy_val <= 95:
+        psy_dict["086-095"] += 1
+    elif psy_val <= 105:
+        psy_dict["096-105"] += 1
+    elif psy_val <= 115:
+        psy_dict["106-115"] += 1
+    elif psy_val <= 125:
+        psy_dict["116-125"] += 1
+    elif psy_val <= 135:
+        psy_dict["126-135"] += 1
+    else:
+        psy_dict["136-145"] += 1
+    return psy_dict

@@ -1,645 +1,99 @@
 import os
-import json
-from typing import List, Any
 
-import numpy as np
 #import sklearn
-from sklearn.dummy import DummyClassifier
-from sklearn.ensemble import RandomForestClassifier
-from scipy.stats import chisquare
 import pickle
+import numpy as np
+from sklearn.model_selection import train_test_split
 
-#import user_classify_lib.corex as ce
+from user_classify_lib.user_cluster.test import test_gower
+from user_classify_lib.fulcrum_test_functions import generate_supervised_classifier
+from user_classify_lib.psy_variables import components
 
-import user_classify_lib.corextopic.corextopic as cet
-#import user_classify_lib.corextopic.vis_topic as vis
+#matplotlib.use('Agg')
 
-import user_classify_lib.biocorex as ce
-#import user_classify_lib.vis_corex as vis
-
-import user_classify_lib.psy_variables as psy
-import user_classify_lib.demographic_variables as dem
-import user_classify_lib.fulcrum_test_functions as test
-
-from user_classify_lib.output import LatexChartGenerator
-
-#get a list of all the questions from the survey set. Use data type to filter for a type of question (binomial,
-# multivariate, continuous etc.) based on the data type or set it to all to get all the questions.
-def get_questions(raw_data: dict, set_key : str = None,
-                  anchor_key : str = None, anchor_set : str = None,
-                  data_type : str = 'all', omitted_words : list = None):
-
-    questions = list()
-    omit = False
-
-    if anchor_set is None:
-        anchor_set = set_key
-
-    for user, value in raw_data.items():
-        if set_key is None:
-            response = value
-        else:
-            response = value[set_key]
-        if anchor_key is None or \
-                (anchor_set is None and anchor_key in raw_data[user].keys()) or \
-                (anchor_set is not None and anchor_key in raw_data[user][anchor_set].keys()):
-
-            for question, answer in response.items():
-
-                if data_type == 'all' or \
-                        (type(answer) is bool and data_type == 'bool') or \
-                        (type(answer) is str and data_type == 'str') or \
-                        (type(answer) is int and data_type == 'int') or \
-                        (type(answer) is float and data_type == 'float'):
-                    if question not in questions:
-                        if omitted_words is not None:
-                            for word in omitted_words:
-                                if word in question:
-                                    omit = True
-                        if not omit:
-                            questions.append(question)
-                        else:
-                            omit = False
-
-    return questions
-
-#get the user IDs
-# (having a list of them reduces randomness when getting the user responses as sample data)
-def get_user_ids(raw_data: dict):
-    return raw_data.keys()
-
-
-def get_sample_response_to_cont_value(answer: str, responses: list, values: list):
-    for i, response in enumerate(responses):
-        if answer == response:
-            return values[i]
-    return -1
-
-
-def get_sample_response_to_binary_value(all_questions: dict, sample_question: str, possible_answers: list,
-                                        all_sample_responses: list):
-    for answer in possible_answers:
-        if sample_question not in all_questions.keys():
-            # all_sample_responses.append(-1)
-            all_sample_responses.append(0)
-        elif all_questions[sample_question] == answer:
-            all_sample_responses.append(1)
-        else:
-            all_sample_responses.append(0)
-
-
-def get_samples_for_input(raw_data: dict, user_id: list, labels: list, set_key: str = None,
-                          anchor_key : str = None, #must have this variable to be part of the samples
-                          anchor_set : str = None): #in case the anchor is in a different dataset
-    input_samples = None
-    if anchor_set is None:
-        anchor_set = set_key
-
-    for user in user_id:
-        if set_key is None:
-            response = raw_data[user]
-        else:
-            response = raw_data[user][set_key]
-        if anchor_key is None or \
-                (anchor_set is None and anchor_key in raw_data[user].keys()) or \
-                (anchor_set is not None and anchor_key in raw_data[user][anchor_set].keys()):
-            answers = list()
-            for label in labels:
-                if label in response.keys():
-                    if response[label] is bool:
-                        answers.append(1) if response[label] else answers.append(0)
-                    else:
-                        answers.append(response[label])
-                else:
-                    # answers_demo.append(-1)
-                    answers.append(0)
-
-            if answers is not None:
-                # print(value['demographics']['visionPrescription'])
-                # get_sample_response_to_binary_value(value['demographics'], 'visionPrescription',
-                #                                    dem.vision_prescription, answers)
-
-                answers = np.asarray(answers)
-                # print(answers)
-
-                input_samples = answers if input_samples is None else np.vstack((input_samples, answers))
-            '''
-            response = value['normalized']
-            answers_psych = list()
-            for label in labels_psych:
-                if label in response.keys():
-                    answers_psych.append(response[label])
-                    # answers.append(response[label])
-                else:
-                    answers_psych.append(-1)
-                    # answers.append(0)
-                    # continue
-            if answers_psych is not None:
-                # add age
-                answers_psych.append(
-                    float(value['demographics']['age'] + 50))  # add 50 to age for range scaling
-
-                # add 'hours_screen_per_day'
-                answers_psych.append(
-                    get_sample_response_to_cont_value(value['demographics']['hours_screen_per_day'],
-                                                      dem.hours_screen_per_day_responses,
-                                                      dem.hours_screen_per_day_values))
-
-                # add 'hours_activity_per_week'
-                answers_psych.append(
-                    get_sample_response_to_cont_value(value['demographics']['hours_activity_per_week'],
-                                                      dem.hours_activity_per_week_responses,
-                                                      dem.hours_activity_per_week_values))
-
-                answers_psych = np.asarray(answers_psych)
-                # print(answers)
-                input_psy = answers_psych if input_psy is None else np.vstack((input_psy, answers_psych))
-                '''
-    #print(input_samples.shape)
-
-    return input_samples
-
-#A supplement function to add numerical values to categorical responses for samples
-def add_response_to_cont_value_samples(samples: np.ndarray, raw_data: dict, user_id: list, label: str,
-                                       label_responses: list = None, label_values: list = None, set_key: str = None,
-                                       anchor_key : str = None, anchor_set : str = None):
-
-    new_samples = None
-    i = 0 #counter for entries with anchors
-    if anchor_set is None:
-        anchor_set = set_key
-
-    for user in user_id:
-        if set_key is None:
-            response = raw_data[user]
-        else:
-            response = raw_data[user][set_key]
-
-        if anchor_key is None or \
-                (anchor_set is None and anchor_key in raw_data[user].keys()) or \
-                (anchor_set is not None and anchor_key in raw_data[user][anchor_set].keys()):
-            answers = samples[i,:].tolist()
-
-
-            if label in response.keys():
-                if(label_responses is not None):
-                    answers.append(get_sample_response_to_cont_value(response[label],
-                                                      label_responses,
-                                                      label_values))
-                else:
-                    answers.append(response[label])
-            else:
-                # answers_demo.append(-1)
-                answers.append(0)
-            answers = np.asarray(answers)
-            new_samples = answers if new_samples is None else np.vstack((new_samples, answers))
-            i = i + 1
-
-    return new_samples
-
-
-#A supplement function that converts the possible answers to a question into their own questions with binary responses
-# For example: changing the "occupation" question and response to a set of questions for each type of occupation
-# and a binary "yes/no" response based on whether they are of that occupation or not
-def add_response_to_binary_value_samples(samples: np.ndarray, raw_data: dict, user_id: list, label: str,
-                                       label_responses: list,  set_key: str = None,
-                                         anchor_key : str = None, anchor_set : str = None):
-
-    new_samples = None
-    i = 0 #counter for entries with anchor
-    if anchor_set is None:
-        anchor_set = set_key
-
-    for user in user_id:
-        if set_key is None:
-            response = raw_data[user]
-        else:
-            response = raw_data[user][set_key]
-
-        if anchor_key is None or \
-                (anchor_set is None and anchor_key in raw_data[user].keys()) or \
-                (anchor_set is not None and anchor_key in raw_data[user][anchor_set].keys()):
-
-            answers = samples[i,:].tolist()
-            get_sample_response_to_binary_value(response, label,
-                                                label_responses, answers)
-            answers = np.asarray(answers)
-            new_samples = answers if new_samples is None else np.vstack((new_samples, answers))
-            i = i+1
-
-    return new_samples
-
-"""
-    GOWER'S DISTANCE
-"""
-
-# get the range for all the numerical responses in a data survey
-def get_range_in_labels(raw_data : dict, labels, set_key = None):
-    label_range = dict()
-    label_max = dict()
-    label_min = dict()
-    for user, value in raw_data.items():
-        if set_key is None:
-            response = value
-        else:
-            response = value[set_key]
-        for label in labels:
-            if label in response.keys():
-                if response[label] is not str:
-                    if label not in label_max.keys():
-                        label_max[label] = response[label]
-                        label_min[label] = response[label]
-                    else:
-                        if response[label] > label_max[label]: label_max[label] = response[label]
-                        if response[label] < label_min[label]: label_min[label] = response[label]
-
-    for label in label_max.keys():
-        label_range[label] = label_max[label] - label_min[label]
-
-    return label_range
-
-
-# calculate the gower distance between two users
-# note that the label_range is a dictionary that lists the range of all quantitative responses
-def calculate_gower_distance(raw_data : dict, user1 : str, user2: str, labels: list, label_range: dict, set_key = None):
+def get_responses_from_questions(value: dict, labels: list, set_key:str=None):
 
     if set_key is None:
-        user1_set = raw_data[user1]
-        user2_set = raw_data[user2]
+        response = value
     else:
-        user1_set = raw_data[user1][set_key]
-        user2_set = raw_data[user2][set_key]
+        response = value[set_key]
 
-    gower_val = list()
-    gower_dist = 0
+    answers = list()
+
     for label in labels:
-        if label in user1_set.keys() and label in user2_set.keys():
-            if type(user1_set[label]) is not str:
-                gower = np.abs(user1_set[label]-user2_set[label]) / label_range[label]
-            else:
-                if user1_set[label] == user2_set[label]:
-                    gower = 0
-                else:
-                    gower = 1
-            gower_dist = gower_dist + gower
-            gower_val.append(gower)
-    if(len(gower_val)) == 0 : gower_dist_norm = None
-    else : gower_dist_norm = gower_dist / len(gower_val)
-
-    return gower_dist_norm, gower_val
-
-def find_min_gower_distance_brute(raw_data: dict, user_list: list, labels: list, label_range: dict, set_key = None):
-    minDist, closest_user1, closest_user2 = None, None, None
-    rank_dist = list()
-    rank_user = list()
-    for i in range(len(user_list)):
-        for j in range(i+1, len(user_list)):
-
-            dist, val = calculate_gower_distance(raw_data, user_list[i], user_list[j], labels, label_range, set_key)
-            if dist is not None:
-                if minDist is None or dist < minDist:
-                    minDist = dist
-                    closest_user1 = user_list[i]
-                    closest_user2 = user_list[j]
-            if len(rank_dist) == 0 :
-                rank_dist.append(dist)
-                rank_user.append([user_list[i], user_list[j]])
-            else:
-                for k in range(len(rank_dist)):
-                    if rank_dist[k] > dist:
-                        rank_dist.insert(k, dist)
-                        rank_user.insert(k, [user_list[i], user_list[j]])
-                        break
-
-
-    return rank_dist, rank_user
-
-
-def test_ce():
-    X = np.array([[0, 0, 0, 0, 0],  # A matrix with rows as samples and columns as variables.
-                  [0, 0, 0, 1, 1],
-                  [1, 1, 1, 0, 0],
-                  [1, 1, 1, 1, 1]], dtype=int)
-
-    #layer1 = ce.Corex(n_hidden=2)  # Define the number of hidden factors to use.
-    layer1 = ce.Corex(n_hidden=2, dim_hidden=2, marginal_description='discrete', smooth_marginals=False, n_repeat=10)  #for biocorex
-    layer1.fit(X)
-
-    print(layer1.clusters)  # Each variable/column is associated with one Y_j
-    # array([0, 0, 0, 1, 1])
-    print(layer1.labels[0])  # Labels for each sample for Y_0
-    # array([0, 0, 1, 1])
-    print(layer1.labels[1])  # Labels for each sample for Y_1
-    # array([0, 1, 0, 1])
-    print(layer1.tcs)  # TC(X;Y_j) (all info measures reported in nats).
-
-
-def test_ce_topic():
-    from sklearn.datasets import fetch_20newsgroups
-    from sklearn.feature_extraction.text import CountVectorizer
-    import scipy.sparse as ss
-
-    # Get 20 newsgroups data
-    newsgroups = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
-
-    # Transform 20 newsgroup data into a sparse matrix
-    vectorizer = CountVectorizer(stop_words='english', max_features=20000, binary=True)
-    doc_word = vectorizer.fit_transform(newsgroups.data)
-    doc_word = ss.csr_matrix(doc_word)
-
-    # Get words that label the columns (needed to extract readable topics and make anchoring easier)
-    words = list(np.asarray(vectorizer.get_feature_names()))
-
-    not_digit_inds = [ind for ind, word in enumerate(words) if not word.isdigit()]
-    doc_word = doc_word[:, not_digit_inds]
-    words = [word for ind, word in enumerate(words) if not word.isdigit()]
-
-    #reduce the number of words interested for simplicity and testing
-    doc_word = doc_word[:, 10000:10100].toarray()
-    words = words[10000:10100]
-
-    #### CorEx Models testing portion
-
-    n_clusters=50
-
-    for run in range(5):
-        print("RUN NUMBER {0}".format(run))
-        print("===================================================================")
-
-        #Using CorEx Topic
-        #layer1 = ce.Corex(n_hidden=n_clusters)
-
-        #Using BioCorEx
-        layer1 = ce.Corex(n_hidden=n_clusters, marginal_description='discrete', smooth_marginals=False)
-        layer1.tc_min = 0
-
-        Y1 = layer1.fit(doc_word)
-
-        c_index = layer1.clusters
-
-        clusters = [[] for i in range(n_clusters)]
-
-        #print(c_index)
-
-        [clusters[c_index[i]].append(label) for i, label in enumerate(words)]
-
-        for j in range(n_clusters):
-            print("\nCluster {0}:".format(j))
-            [print(clusters[j][k]) for k in range(len(clusters[j]))]
-
-
-def run_corex(input: np.ndarray, conditions:list, n_clusters:int = 10, title:str=None, topic=False):
-
-    # linearcorex
-    # layer1 = ce.Corex(n_hidden=n_clusters, gaussianize='None', missing_values=-1, verbose=True)
-
-    if(topic):
-        layer1 = cet.Corex(n_hidden=n_clusters, verbose=False)
-
-    # biocorex
-    else:
-        layer1 = ce.Corex(n_hidden=n_clusters, marginal_description='gaussian', smooth_marginals=True, missing_values=-1,
-                      verbose=False, n_repeat=1)
-    #layer1.tc_min = 0
-
-    # original
-    # layer1 = ce.Corex(n_hidden=n_clusters, verbose=True, count='fraction')
-
-    Y1 = layer1.fit(input)
-
-    c_index = layer1.clusters
-
-    clusters = [[] for i in range(n_clusters)]
-
-    print(c_index)
-
-    [clusters[c_index[i]].append(label) for i, label in enumerate(conditions)]
-
-    for j in range(n_clusters):
-        print("\nCluster {0}:".format(j))
-        [print(clusters[j][k]) for k in range(len(clusters[j]))]
-
-    print("\nCLUSTER SAMPLE SIZE: ")
-    print(layer1.labels.shape)
-    print("\nTC FOR EACH CLUSTER:")
-    print(layer1.tcs)
-    print("\nTOTAL TC FOR THIS COREX RUN:")
-    print(layer1.tc)
-
-    #vis.vis_rep(layer1, data=input, column_label=conditions, prefix=title)
-
-    # print(layer1.alpha)
-    # np.savetxt('alpha.txt', layer1.alpha[:,:,0].transpose(), fmt='%.3e')
-
-    return layer1, clusters
-
-
-def run_fulcrum_data(raw_data:dict):
-
-
-    #conditions = get_conditions_all(raw_data['fulcrum_study'])
-    conditions = test.get_conditions_no_scales(raw_data['fulcrum_study'])
-
-    input = test.get_demo_samples(raw_data['fulcrum_study'], conditions)
-    #input = get_all_samples_w_scale(raw_data['fulcrum_study'], conditions)
-
-    #also consider age.
-    conditions.append('age')
-
-    '''
-    conditions.append("age | A")
-    conditions.append("age | B")
-    conditions.append("age | C")
-    conditions.append("age | D")
-    conditions.append("age | E")
-
-    
-    conditions.append("age | young")
-    conditions.append("age | medium")
-    conditions.append("age | old")
-    '''
-
-    #np.savetxt('conditions.txt', conditions)
-    n_clusters = 50 # Define the number of hidden factors to use.
-
-    run_corex(input, conditions, n_clusters, 'fulcrum_demo_w_age_biocorex2')
-
-
-def run_psychometric_data(raw_data:dict):
-
-    psy_all = True
-
-    if(psy_all):
-
-        psychometrics = test.get_psychometrics_all(raw_data['fulcrum_study'])
-        input = test.get_psychometric_samples(raw_data['fulcrum_study'], psychometrics)
-
-        #add age to psychometrics labels
-        psychometrics.append('age')
-
-        n_clusters = 50  # Define the number of hidden factors to use.
-        run_corex(input, psychometrics, n_clusters, 'fulcrum_psychometrics_all_w_age')
-
-    else:
-        psychometrics = {
-            'basic' : psy.basic_variables,
-            'central' :psy.central,
-            'color' :psy.color,
-            'components' :psy.components,
-            'concurrency' :psy.concurrency,
-            'contrast' : psy.contrast,
-            'divided' : psy.divided,
-            'duration' :psy.duration,
-            'essentricity' :psy.eccentricity,
-            'focussed' :psy.focussed,
-            'peripheral' : psy.peripheral,
-            'size' :psy.size,
-            'speed' :psy.speed,
-            'subcomponents' :psy.sub_components
-        }
-
-        #psyKey = 'subcomponents'
-        for psyKey in psychometrics:
-            print("==================================")
-            print("=================" + psyKey + "=================")
-            print("==================================")
-            print(psychometrics[psyKey])
-            input = test.get_psychometric_samples(raw_data['fulcrum_study'], psychometrics[psyKey])
-            # input = get_all_samples_w_scale(raw_data['fulcrum_study'], conditions)
-
-            # np.savetxt('conditions.txt', conditions)
-            n_clusters = 10  # Define the number of hidden factors to use.
-            run_corex(input, psychometrics[psyKey], n_clusters, 'fulcrum_psychometrics_'+psyKey)
-
-PSY_GROUPS = {
-    'basic' : psy.basic_variables,
-    'central' :psy.central,
-    'color' :psy.color,
-    'components' :psy.components,
-    'concurrency' :psy.concurrency,
-    'contrast' : psy.contrast,
-    'divided' : psy.divided,
-    'duration' :psy.duration,
-    'essentricity' :psy.eccentricity,
-    'focussed' :psy.focussed,
-    'peripheral' : psy.peripheral,
-    'size' :psy.size,
-    'speed' :psy.speed,
-    'subcomponents' :psy.sub_components
-}
-
-def run_demo_psych_combined(raw_data: dict, psy_group_key : str = None):
-
-    #conditions = test.get_conditions_no_scales(raw_data['fulcrum_study'])
-    conditions = get_questions(raw_data['fulcrum_study'], set_key='demographics', anchor_key='eyeConditions | glaucoma',
-                               data_type='bool', omitted_words=['mild', 'moderate', 'severe'])
-    if psy_group_key is None:
-        psychometrics = get_questions(raw_data['fulcrum_study'], set_key='normalized',
-                                      anchor_key='eyeConditions | glaucoma', anchor_set='demographics')
-        tag = 'all'
-        n_clusters = 30 # Define the number of hidden factors to use.
-    else:
-        psychometrics = PSY_GROUPS[psy_group_key]
-        tag = psy_group_key
-        n_clusters = 10 # Define the number of hidden factors to use.
-
-    user_ids = get_user_ids(raw_data['fulcrum_study'])
-    print(psychometrics)
-
-    input_demo = get_samples_for_input(raw_data['fulcrum_study'], user_ids, conditions, set_key='demographics',
-                                       anchor_key='eyeConditions | glaucoma')
-    input_psych = get_samples_for_input(raw_data['fulcrum_study'], user_ids, psychometrics, set_key='normalized',
-                                       anchor_key='eyeConditions | glaucoma', anchor_set='demographics')
-
-    input_demo = add_response_to_binary_value_samples(input_demo, raw_data['fulcrum_study'], user_ids, 'visionPrescription',
-                                         dem.vision_prescription, set_key='demographics', anchor_key= 'eyeConditions | glaucoma')
-
-    input_psych = add_response_to_cont_value_samples(input_psych, raw_data['fulcrum_study'], user_ids, 'age',
-                                       set_key='demographics', anchor_key='eyeConditions | glaucoma')
-
-    input_psych = add_response_to_cont_value_samples(input_psych, raw_data['fulcrum_study'], user_ids, 'hours_screen_per_day',
-                                       set_key='demographics', label_responses=dem.hours_screen_per_day_responses,
-                                       label_values=dem.hours_screen_per_day_values, anchor_key='eyeConditions | glaucoma')
-    input_psych = add_response_to_cont_value_samples(input_psych, raw_data['fulcrum_study'], user_ids, 'hours_activity_per_week',
-                                       set_key='demographics', label_responses=dem.hours_activity_per_week_responses,
-                                       label_values=dem.hours_activity_per_week_values, anchor_key='eyeConditions | glaucoma')
-
-    #input_demo, input_psych = test.get_demo_and_psych_samples(raw_data['fulcrum_study'], conditions, psychometrics)
-
-    print(input_psych.shape)
-    print(input_demo.shape)
-
-    #Run the psychometric data analysis first - Layer 1
-
-    #additional continuous variables added alongside the psychometrics data
-    psychometrics.append('age')
-    psychometrics.append('hours_screen_per_day')
-    psychometrics.append('hours_activity_per_week')
-
-    # additional binary variables added alongside the demographics data
-    conditions.append("vision | farsighted")
-    conditions.append("vision | nearsighted")
-    conditions.append("vision | only glasses to read")
-
-
-    psy_layer, psy_clusters = run_corex(input_psych, psychometrics, n_clusters, 'fulcrum_psychometrics_' + tag + '_w_age')
-
-
-    #include the psychometric clusters with the demographic variables
-    input_all = np.hstack((input_demo, psy_layer.labels))
-    print("Input all size:")
-    print(input_all.shape)
-    [conditions.append("Psy_Cluster_" + str(i)) for i in range(n_clusters)]
-
-    print("labels size:")
-    print(len(conditions))
-    n_clusters_all = 30
-
-    #Run demographic variables and psychometric clusters analysis together
-    dem_layer, dem_clusters = run_corex(input_all, conditions, n_clusters_all, 'fulcrum_dem_and_psych', topic=True)
-
-    psy_cluster_order = []
-
-    for j in range(n_clusters_all):
-        [psy_cluster_order.append(int(dem_clusters[j][k][12:])) for k in range(len(dem_clusters[j])) if "Psy_Cluster_" in dem_clusters[j][k] ]
-
-    print(psy_cluster_order)
-
-    #generate graphs
-    tex_name = 'fulcrum_dem_and_psych_' + tag + '.tex'
-    test_output = LatexChartGenerator(tex_name)
-    test_output.writeHeader()
-    test_output.writeClusters(psy_clusters, n_clusters, 1, cluster_order=psy_cluster_order, tc=psy_layer.tc)
-    test_output.writeClusters(dem_clusters, n_clusters_all, 2, tc=dem_layer.tc)
-    test_output.writeArrows(n_clusters,"Psy_Cluster_")
-    test_output.writeFooter()
-
-"""TESTING GOWER DISTANCE"""
-
-def test_gower(raw_data: dict):
-    conditions = get_questions(raw_data['fulcrum_study'], set_key='demographics', anchor_key='eyeConditions | glaucoma',
-                               data_type='all', omitted_words=['mild', 'moderate', 'severe'])
-    print(conditions)
-    user_ids = get_user_ids(raw_data['fulcrum_study'])
-    range = dict()
-    for label in conditions: range[label] = 1
-    user_list = list(user_ids)
-
-    gower_dist, gower_val = calculate_gower_distance(raw_data['fulcrum_study'], user_list[0], user_list[1], labels=conditions, label_range=range, set_key='demographics')
-
-    rank_dist, rank_user = find_min_gower_distance_brute(raw_data['fulcrum_study'], user_list, labels=conditions, label_range=range, set_key='demographics')
-
-    print(rank_dist)
-    print(rank_user)
-    #print(minDist)
-    #print(json.dumps(raw_data['fulcrum_study'][closest_user1]['demographics'], indent=4, sort_keys=True))
-    #print(json.dumps(raw_data['fulcrum_study'][closest_user2]['demographics'], indent=4, sort_keys=True))
+        if label in response.keys():
+            # input_answers.append(1) if input_response[label] else input_answers.append(0)
+            answers.append(response[label])
+        else:
+            answers = None
+            break
+            # input_answers.append(None)
+    if answers is not None:
+        # print(input_answers)
+        answers = np.asarray(answers)
+
+    return answers
+
+# training and testing various supervised learning classifiers
+# raw data is the dataset to do the analyses from
+# input/output labels are the names of the input parameters and output answers from the classifiers, respectively
+# set keys determine which dataset we are using from the user (demographics dataset or psychometrics dataset
+# train/test ratio is the partitioning of data to training and testing sets
+def supervised_ml_train_test(raw_data: dict,
+                             input_labels: list = None, output_labels: list = None,
+                             input_set_key: str = None, output_set_key : str = None,
+                             test_ratio : float = 0.2):
+
+    input_values = None
+    output_values = None
+    for user, value in raw_data.items():
+
+        if input_labels is None:
+            if input_set_key is None: input_labels = value.keys()
+            else: input_labels = value[input_set_key].keys()
+            print("==========")
+            print("Input Labels")
+            print(input_labels)
+
+        if output_labels is None:
+            if output_set_key is None: output_labels = value.keys()
+            else: output_labels = value[output_set_key].keys()
+            print("==========")
+            print("Output Labels")
+            print(output_labels)
+
+        input_answers = get_responses_from_questions(value, input_labels, input_set_key)
+        output_answers = get_responses_from_questions(value, output_labels, output_set_key)
+
+        if input_answers is not None and output_answers is not None:
+
+            input_answers = np.asarray(input_answers)
+            input_values = input_answers if input_values is None else np.vstack((input_values, input_answers))
+
+            output_answers = np.asarray(output_answers)
+            output_values = output_answers if output_values is None else np.vstack((output_values, output_answers))
+
+    # print(input_values)
+
+    print(input_values.shape)
+    print(output_values.shape)
+
+    train_x, test_x, train_y, test_y = train_test_split(input_values, output_values,
+                                                        test_size = test_ratio)
+
+    generate_supervised_classifier(train_x, train_y, test_x, test_y,
+                                   classifier_type='RandomForest')
+
+    print("Train X shape")
+    print(train_x.shape)
+    print("Labels length")
+    print(len(input_labels))
 
 if __name__ == "__main__":
 
     folder_name = 'data/classification_source/'
     file_names = {
-        'fulcrum_study': 'normalized_data.p',
+        'fulcrum_study': 'normalized_data (fulcrum_study).p',
     }
 
     raw_data = dict()
@@ -655,6 +109,8 @@ if __name__ == "__main__":
         else:
             print('File not found: {0}'.format(os.path.join(folder_name, value)))
 
+    ######Corex Tests#####
+
     #test_ce()
 
     #test_ce_topic()
@@ -667,8 +123,32 @@ if __name__ == "__main__":
     #run_fulcrum_data()
     #run_psychometric_data(raw_data)
     #run_demo_psych_combined(raw_data)
-    test_gower(raw_data)
 
-    #for psyKey in PSY_GROUPS:
+    # for psyKey in PSY_GROUPS:
     #   run_demo_psych_combined(raw_data, psyKey)
+
+    ##### User Clustering Tests #####
+
+    #test_gower(raw_data)
+
+    #filtered_data = filter_data_by_condition(raw_data['fulcrum_study'], "eyeConditions | dry eye", True, set_key='demographics')
+
+    #get_feature_counts(filtered_data, set_key='demographics')
+    #get_feature_counts_cont(filtered_data, set_key='normalized')
+
+    ##### Supervised Classifiers Tests #####
+    input_labels = components
+
+    output_labels= [
+        "eyeConditions | dry eye",
+        "eyeConditions | glaucoma"
+    ]
+    supervised_ml_train_test(raw_data['fulcrum_study'],
+                             input_labels=input_labels, output_labels=output_labels,
+                             input_set_key='normalized', output_set_key='demographics')
+
+
+
+
+
 

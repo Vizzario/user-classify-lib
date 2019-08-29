@@ -1,1 +1,0 @@
-name = "corex_topic"

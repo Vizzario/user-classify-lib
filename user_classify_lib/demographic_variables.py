@@ -36,3 +36,30 @@ vision_prescription=[
     "nearsighted",
     "only glasses to read"
 ]
+
+age_range=[
+    "0-15",
+    "16-25",
+    "26-35",
+    "36-45",
+    "46-55",
+    "56-65",
+    "65+"
+]
+
+def bin_age_range(age_val: int, age_dict: dict):
+    if age_val <= 15:
+        age_dict["0-15"] += 1
+    elif age_val <= 25:
+        age_dict["16-25"] += 1
+    elif age_val <= 35:
+        age_dict["26-35"] += 1
+    elif age_val <= 45:
+        age_dict["36-45"] += 1
+    elif age_val <= 55:
+        age_dict["46-55"] += 1
+    elif age_val <= 65:
+        age_dict["56-65"] += 1
+    else:
+        age_dict["65+"] += 1
+    return age_dict

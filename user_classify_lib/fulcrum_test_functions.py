@@ -292,24 +292,42 @@ def get_demo_and_psych_samples(raw_data: dict, labels_demo: list, labels_psych: 
     print(input_psy.shape)
     return input_demo, input_psy
 
-def test_classifiers(train_x: np.ndarray, train_y: np.ndarray, test_x: np.ndarray, test_y: np.ndarray):
+def generate_supervised_classifier(train_x: np.ndarray, train_y: np.ndarray,
+                                   test_x: np.ndarray = None, test_y: np.ndarray = None,
+                                   classifier_type: str = 'Dummy'):
     print(train_x.shape)
     print(test_x.shape)
 
-    print(train_y.shape)
-    print(test_y.shape)
+    classifier_options = {
+        'Dummy' : DummyClassifier(strategy="stratified"),
+        'RandomForest' : RandomForestClassifier(n_estimators=1000)
+    }
 
-    dummy = DummyClassifier(strategy="stratified")
-    dummy.fit(train_x, train_y)
-    pred_val = dummy.predict(test_x)
+    classifier = classifier_options[classifier_type]
+    classifier.fit(train_x, train_y)
 
-    forest = RandomForestClassifier()
-    forest.fit(train_x, train_y)
-    pred_forest = forest.predict(test_x)  # > 0.08
-    # pred_forest = pred_forest.astype(int)
+    if test_x is not None and test_y is not None:
 
-    for i in range(test_y.size):
-        print("{0}  {1}".format(str(test_y[i]), str(pred_forest[i])))
+        print(train_y.shape)
+        print(test_y.shape)
+        test_data_length = test_y.shape[0]
+        num_output_labels = test_y.shape[1]
+
+        pred_val = classifier.predict(test_x)  # > 0.08
+        prob_val = classifier.predict_proba(test_x)
+
+        # pred_val = pred_val.astype(int)
+
+        num_correct = [0] * num_output_labels
+        for i in range(test_data_length):
+            print("{0}  {1} : Probability: {2}".format(str(test_y[i]), str(pred_val[i]), str([p[i] for p in prob_val])))
+            for j in range(len(num_correct)):
+                if int(test_y[i][j]) == int(pred_val[i][j]) : num_correct[j] += 1
+
+        print("Number Correct: {0}".format(num_correct))
+        print("Ratio Correct: {0}".format([n/test_data_length for n in num_correct]))
+
+    return classifier
 
 def test_glaucoma_conditions_chi(raw_data: dict, labels: list):
     input_all = None
@@ -392,7 +410,7 @@ def test_class_conditions_input(raw_data: dict, labels: list):
     train_y = glaucoma_all[0:1000];
     test_y = glaucoma_all[1000:];
 
-    test_classifiers(train_x, train_y, test_x, test_y)
+    generate_supervised_classifier(train_x, train_y, test_x, test_y)
 
 def test_class_gender_input(raw_data: dict):
     gender_all = None
@@ -423,4 +441,4 @@ def test_class_gender_input(raw_data: dict):
 
     print(gender_all.size)
     print(glaucoma_all.size)
-    test_classifiers(train_x, train_y, test_x, test_y)
+    generate_supervised_classifier(train_x, train_y, test_x, test_y)
