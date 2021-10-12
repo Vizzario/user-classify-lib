@@ -1,5 +1,5 @@
 numpy==1.15.2
-opencv-python==3.1.0
+opencv-python==4.2.0.32
 matplotlib==3.0.2
 
 #From the vizap library
